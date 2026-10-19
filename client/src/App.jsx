@@ -1,55 +1,69 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import api from './services/api';
+import React, { useContext } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, AuthContext } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function Home() {
-  const [health, setHealth] = useState({ status: 'Loading...', message: '' });
-
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const response = await api.get('/health');
-        setHealth({ status: 'Success', message: response.data.message });
-      } catch (error) {
-        console.error("Health check failed", error);
-        setHealth({ status: 'Error', message: error.message });
-      }
-    };
-    
-    checkHealth();
-  }, []);
+  const { user, logout } = useContext(AuthContext);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
         <h1 className="text-3xl font-bold text-blue-600 mb-4">AdaptIQ</h1>
-        <p className="text-gray-700 mb-6">M01 MERN Foundation is running.</p>
+        <p className="text-gray-700 mb-6">M02 Authentication is running.</p>
         
         <div className="bg-gray-50 border border-gray-200 rounded p-4 text-left">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-2">Backend Connection</h2>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-gray-700">Status:</span>
-            <span className={`px-2 py-1 text-xs font-semibold rounded ${health.status === 'Success' ? 'bg-green-100 text-green-800' : health.status === 'Error' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-              {health.status}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-700">Message:</span>
-            <span className="text-sm text-gray-600">{health.message || '...'}</span>
-          </div>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-2">Current User</h2>
+          <div className="mb-1"><span className="font-medium text-gray-700">Name:</span> {user.name}</div>
+          <div className="mb-1"><span className="font-medium text-gray-700">Email:</span> {user.email}</div>
+          <div className="mb-4"><span className="font-medium text-gray-700">Role:</span> <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{user.role}</span></div>
+          
+          <button 
+            onClick={logout}
+            className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+// Simple wrapper to prevent authenticated users from seeing login/register
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useContext(AuthContext);
+  if (loading) return <div>Loading...</div>;
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route 
+        path="/" 
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } 
+      />
+    </Routes>
+  );
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
