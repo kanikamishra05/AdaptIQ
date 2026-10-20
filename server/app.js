@@ -3,6 +3,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
+const questionRoutes = require('./routes/questionRoutes');
+const quizRoutes = require('./routes/quizRoutes');
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use(cors({
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/questions', questionRoutes);
+app.use('/api/v1/quizzes', quizRoutes);
 
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
