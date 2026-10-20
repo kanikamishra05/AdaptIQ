@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['student', 'teacher', 'interviewer'],
     required: [true, 'Role is required'],
+  },
+  skillRating: {
+    type: Number,
+    default: 1000,
+    min: [100, 'Skill rating cannot be less than 100'],
+    max: [3000, 'Skill rating cannot exceed 3000'],
   }
 }, { timestamps: true });
 

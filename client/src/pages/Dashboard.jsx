@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import quizService from '../services/quizService';
 import questionService from '../services/questionService';
+import adaptiveService from '../services/adaptiveService';
+import AdaptivePlayground from '../components/AdaptivePlayground';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const [stats, setStats] = useState({
     quizzesCount: 0,
     questionsCount: 0,
+    skillRating: user?.skillRating || 1000,
     loading: true
   });
 
@@ -23,9 +26,22 @@ const Dashboard = () => {
           const questRes = await questionService.getQuestions();
           qCount = questRes.count || 0;
         }
+
+        // Fetch authoritative rating from backend
+        let liveRating = user?.skillRating || 1000;
+        try {
+          const ratingRes = await adaptiveService.getUserRating();
+          if (ratingRes?.data?.skillRating) {
+            liveRating = ratingRes.data.skillRating;
+          }
+        } catch (e) {
+          // fallback to user payload
+        }
+
         setStats({
           quizzesCount: quizRes.count || 0,
           questionsCount: qCount,
+          skillRating: liveRating,
           loading: false
         });
       } catch (err) {
@@ -34,7 +50,16 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, [isTeacherOrInterviewer]);
+  }, [isTeacherOrInterviewer, user]);
+
+  const getRatingTier = (rating) => {
+    if (rating < 800) return { label: 'Novice', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+    if (rating < 1200) return { label: 'Intermediate', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+    if (rating < 1600) return { label: 'Advanced', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' };
+    return { label: 'Expert', color: 'bg-purple-100 text-purple-800 border-purple-200' };
+  };
+
+  const tier = getRatingTier(stats.skillRating);
 
   return (
     <div className="space-y-8">
@@ -46,7 +71,7 @@ const Dashboard = () => {
               Welcome back, {user?.name}! 👋
             </h1>
             <p className="mt-1 text-gray-600">
-              AdaptIQ Quiz & Question Foundation is active. Logged in as{' '}
+              AdaptIQ Core Adaptive Engine is active. Logged in as{' '}
               <span className="font-semibold text-blue-600 capitalize">{user?.role}</span>.
             </p>
           </div>
@@ -79,52 +104,85 @@ const Dashboard = () => {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Authoritative Skill Rating */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            {isTeacherOrInterviewer ? 'Total Quizzes' : 'Available Published Quizzes'}
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {user?.role === 'student' ? 'Your Skill Rating' : 'Base Skill Rating'}
           </div>
-          <div className="mt-2 text-3xl font-extrabold text-blue-600">
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-3xl font-extrabold text-blue-600">
+              {stats.loading ? '...' : stats.skillRating}
+            </span>
+            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${tier.color}`}>
+              {tier.label}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Authoritative Elo rating tracked on backend.
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {isTeacherOrInterviewer ? 'Total Quizzes' : 'Available Quizzes'}
+          </div>
+          <div className="mt-2 text-3xl font-extrabold text-indigo-600">
             {stats.loading ? '...' : stats.quizzesCount}
           </div>
-          <div className="mt-4">
-            <Link to="/quizzes" className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+          <div className="mt-2">
+            <Link to="/quizzes" className="text-xs font-medium text-indigo-600 hover:underline">
               View all quizzes &rarr;
             </Link>
           </div>
         </div>
 
-        {isTeacherOrInterviewer && (
+        {isTeacherOrInterviewer ? (
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Question Bank Items
             </div>
-            <div className="mt-2 text-3xl font-extrabold text-indigo-600">
+            <div className="mt-2 text-3xl font-extrabold text-purple-600">
               {stats.loading ? '...' : stats.questionsCount}
             </div>
-            <div className="mt-4">
-              <Link to="/questions" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
+            <div className="mt-2">
+              <Link to="/questions" className="text-xs font-medium text-purple-600 hover:underline">
                 Manage questions &rarr;
               </Link>
             </div>
           </div>
+        ) : (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Scaling Factor (K)
+            </div>
+            <div className="mt-2 text-3xl font-extrabold text-purple-600">
+              32
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              Contract calibrated rating delta weight.
+            </p>
+          </div>
         )}
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-            Platform Status
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Engine Status
           </div>
           <div className="mt-2 flex items-center space-x-2">
-            <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
-            <span className="text-xl font-bold text-gray-900">M03 Active</span>
+            <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-lg font-bold text-gray-900">M04 Active</span>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Quiz & Question Foundation ready for future adaptive engines.
+          <p className="mt-2 text-xs text-gray-400">
+            Core Adaptive Engine verified and operational.
           </p>
         </div>
       </div>
 
-      {/* Feature Navigation Cards */}
+      {/* Interactive Adaptive Playground */}
+      <AdaptivePlayground initialUserRating={stats.skillRating} />
+
+      {/* Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
           <div>
@@ -173,15 +231,15 @@ const Dashboard = () => {
             <div>
               <div className="flex items-center space-x-3 mb-2">
                 <span className="text-2xl">🎯</span>
-                <h2 className="text-xl font-bold text-gray-900">Adaptive Testing Ready</h2>
+                <h2 className="text-xl font-bold text-gray-900">Adaptive Assessment Engine</h2>
               </div>
               <p className="text-gray-600 text-sm">
-                As a student, all assessments maintain strict security. Answer keys and explanations remain securely protected on the backend until adaptive evaluation sessions in upcoming milestones.
+                All questions adapt dynamically based on your performance. The backend recalculates your skill rating after every answer and deterministically selects subsequent questions closest to your level.
               </p>
             </div>
             <div className="mt-6">
-              <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded">
-                Protected Assessment Mode
+              <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded border border-emerald-200">
+                Authoritative Elo Engine Active
               </span>
             </div>
           </div>

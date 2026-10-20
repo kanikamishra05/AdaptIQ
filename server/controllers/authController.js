@@ -33,7 +33,8 @@ const register = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        skillRating: user.skillRating || 1000
       }
     });
   } catch (error) {
@@ -68,7 +69,8 @@ const login = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        skillRating: user.skillRating || 1000
       }
     });
   } catch (error) {
@@ -101,7 +103,8 @@ const getMe = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        skillRating: user.skillRating || 1000
       }
     });
   } catch (error) {
