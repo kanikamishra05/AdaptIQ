@@ -12,6 +12,7 @@ import QuizDetails from './pages/QuizDetails';
 import QuizForm from './pages/QuizForm';
 import Questions from './pages/Questions';
 import QuestionForm from './pages/QuestionForm';
+import Mastery from './pages/Mastery';
 
 // Simple wrapper to prevent authenticated users from seeing login/register
 const PublicRoute = ({ children }) => {
@@ -47,6 +48,18 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <Quizzes />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Topic Mastery Route (M05) */}
+      <Route
+        path="/mastery"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Mastery />
             </Layout>
           </ProtectedRoute>
         }

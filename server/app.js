@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const questionRoutes = require('./routes/questionRoutes');
 const quizRoutes = require('./routes/quizRoutes');
 const adaptiveRoutes = require('./routes/adaptiveRoutes');
+const masteryRoutes = require('./routes/masteryRoutes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/questions', questionRoutes);
 app.use('/api/v1/quizzes', quizRoutes);
 app.use('/api/v1/adaptive', adaptiveRoutes);
+app.use('/api/v1/mastery', masteryRoutes);
 
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({

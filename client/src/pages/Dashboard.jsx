@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import quizService from '../services/quizService';
 import questionService from '../services/questionService';
 import adaptiveService from '../services/adaptiveService';
+import masteryService from '../services/masteryService';
 import AdaptivePlayground from '../components/AdaptivePlayground';
 
 const Dashboard = () => {
@@ -12,6 +13,8 @@ const Dashboard = () => {
     quizzesCount: 0,
     questionsCount: 0,
     skillRating: user?.skillRating || 1000,
+    masteryTopics: 0,
+    averageMastery: 0,
     loading: true
   });
 
@@ -38,10 +41,28 @@ const Dashboard = () => {
           // fallback to user payload
         }
 
+        // Fetch mastery profile
+        let mTopics = 0;
+        let avgM = 0;
+        try {
+          if (isTeacherOrInterviewer) {
+            const cohortRes = await masteryService.getCohortOverview();
+            mTopics = cohortRes.data?.totalTopicsTracked || 0;
+          } else {
+            const myMRes = await masteryService.getMyMastery();
+            mTopics = myMRes.data?.summary?.totalTopics || 0;
+            avgM = myMRes.data?.summary?.averageMastery || 0;
+          }
+        } catch (e) {
+          // fallback
+        }
+
         setStats({
           quizzesCount: quizRes.count || 0,
           questionsCount: qCount,
           skillRating: liveRating,
+          masteryTopics: mTopics,
+          averageMastery: avgM,
           loading: false
         });
       } catch (err) {
@@ -167,14 +188,14 @@ const Dashboard = () => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Engine Status
+            Platform Status
           </div>
           <div className="mt-2 flex items-center space-x-2">
             <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-lg font-bold text-gray-900">M04 Active</span>
+            <span className="text-lg font-bold text-gray-900">M05 Active</span>
           </div>
           <p className="mt-2 text-xs text-gray-400">
-            Core Adaptive Engine verified and operational.
+            Topic Mastery Engine verified & operational.
           </p>
         </div>
       </div>
@@ -244,6 +265,28 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+        {/* Topic Mastery Navigation Card (M05) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between md:col-span-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center space-x-3 mb-1">
+                <span className="text-2xl">📊</span>
+                <h2 className="text-xl font-bold text-gray-900">Topic-Level Mastery Profiles</h2>
+              </div>
+              <p className="text-gray-600 text-sm max-w-2xl">
+                {isTeacherOrInterviewer
+                  ? `Cohort oversight: ${stats.masteryTopics} topics tracked with automatic weak-area identification and remedial recommendations.`
+                  : `Personalized skill mapping: ${stats.masteryTopics} topics engaged with an average competency score of ${stats.averageMastery}%.`}
+              </p>
+            </div>
+            <Link
+              to="/mastery"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm transition whitespace-nowrap text-center"
+            >
+              {isTeacherOrInterviewer ? 'View Cohort Analytics' : 'View My Mastery'} &rarr;
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

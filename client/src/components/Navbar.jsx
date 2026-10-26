@@ -40,6 +40,9 @@ const Navbar = () => {
               <Link to="/quizzes" className={navLinkClass('/quizzes')}>
                 Quizzes
               </Link>
+              <Link to="/mastery" className={navLinkClass('/mastery')}>
+                Mastery
+              </Link>
               {isTeacherOrInterviewer && (
                 <Link to="/questions" className={navLinkClass('/questions')}>
                   Question Bank
@@ -69,6 +72,7 @@ const Navbar = () => {
       <div className="md:hidden flex px-4 pb-2 space-x-2 border-t border-gray-100 pt-2 overflow-x-auto">
         <Link to="/" className={navLinkClass('/')}>Dashboard</Link>
         <Link to="/quizzes" className={navLinkClass('/quizzes')}>Quizzes</Link>
+        <Link to="/mastery" className={navLinkClass('/mastery')}>Mastery</Link>
         {isTeacherOrInterviewer && (
           <Link to="/questions" className={navLinkClass('/questions')}>Question Bank</Link>
         )}

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
 const RatingLog = require('../models/RatingLog');
+const masteryService = require('./masteryService');
 const {
   DEFAULT_INITIAL_RATING,
   DEFAULT_K_FACTOR,
@@ -137,6 +138,26 @@ const evaluateAnswer = async ({
     confidence: confidence || null
   });
 
+  // Update Topic Mastery profile (M05)
+  let topicMastery = null;
+  if (question.topic) {
+    const masteryDoc = await masteryService.recordAttempt({
+      userId: user._id,
+      topic: question.topic,
+      domain: question.domain || 'General',
+      isCorrect,
+      userRating: ratingResult.newRating
+    });
+    topicMastery = {
+      topic: masteryDoc.topic,
+      domain: masteryDoc.domain,
+      masteryScore: masteryDoc.masteryScore,
+      accuracy: masteryDoc.accuracy,
+      questionsAttempted: masteryDoc.questionsAttempted,
+      questionsCorrect: masteryDoc.questionsCorrect
+    };
+  }
+
   // Next question selection from quiz pool if quizId is provided
   let nextQuestion = null;
   if (quizId) {
@@ -161,6 +182,7 @@ const evaluateAnswer = async ({
     newRating: ratingResult.newRating,
     kFactor: ratingResult.kFactor,
     explanation: question.explanation || '',
+    topicMastery,
     nextQuestion
   };
 };
